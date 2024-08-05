@@ -1,0 +1,55 @@
+
+
+DECL INT I, J, HANDLE, CREAD_OFFSET
+DECL REAL TIMEOUT, CHECKSUM, SUMCOORD
+
+DECL STATE_T CWRITE_STATE, CREAD_STATE
+DECL MODUS_T RD_MODUS, WR_MODUS
+DECL POS PositionRobot
+
+
+
+RD_MODUS=#ABS ;Active reading of the channel.
+The function waits until the channel makes a
+data block available or until waiting is aborted
+by Timeout.
+
+WR_MODUS=#SYNC 
+
+;--------loop-------------
+LOOP ;endless loop
+
+;------------- Write to COM -----------
+CWRITE(HANDLE,CWRITE_STATE,MODUS," ") ;Send a space to mark the start of the loop.
+ CWRITE(HANDLE,CWRITE_STATE,MODUS,"%d",I)  ;Send counter value to track the loop.
+
+;------------ Read from COM -----------
+
+COPEN(:SER_1, HANDLE)
+
+; HANDLE == 0 is error?
+
+IF HANDLE==0 THEN ;If an error occured during opening the channel, then stop the program.
+ HALT
+ENDIF
+
+
+;----------read channel------------
+
+TIMEOUT=50.0
+CREAD_OFFSET=0
+
+
+READ(HANDLE,CREAD_STATE,MODUS,TIMEOUT,CREAD_OFFSET,"%f %f %f %f %f %f %d %d %f",PositionRobot.X,PositionRobot.Y,PositionRobot.Z,PositionRobot.A,PositionRobot.B,PositionRobot.C,PositionRobot.S,PositionRobot.T,CHECKSUM)
+ ;Send for example the string "2000 -800 1800 -90 90 -90 2 10 2922" to COM2. THe last value is the sum of all previous values.
+; CREAD (Handle, State, Mode, Timeout, Offset, Format,
+;Var1 , ..., VarN  )
+
+
+ IF CREAD_STATE.RET1==#CMD_TIMEOUT THEN ;If the timeout time has been exceeded, then exit the loop. 
+  EXIT
+ ENDIF
+
+
+
+
